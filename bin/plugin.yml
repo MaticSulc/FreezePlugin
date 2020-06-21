@@ -1,0 +1,14 @@
+main: com.excavator.freeze.Freeze
+name: Freeze
+version: 1.0
+author: Excavator#9612
+
+commands:
+  ss:
+    usage: /ss [player]
+    description: Freezes a player.
+permissions:
+  ss.use:
+    description: Gives access to the screenshare command
+    default: op
+     
