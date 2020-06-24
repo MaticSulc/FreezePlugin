@@ -19,12 +19,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import net.md_5.bungee.api.ChatColor;
 
 public class Freeze extends JavaPlugin implements Listener {
 	
-	private List<UUID> frozen = new ArrayList<>();
+	private final List<UUID> frozen = new ArrayList<>();
 	
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
@@ -55,14 +56,14 @@ public class Freeze extends JavaPlugin implements Listener {
 			player.sendMessage(ChatColor.RED + "The user is offline or the name is invalid!");
 			return true;
 		}
-		if(frozen.contains(player.getUniqueId())) {				//toggle
-			this.frozen.remove(target.getUniqueId()); 
+		if(frozen.contains(target.getUniqueId())) {				//toggle
+			frozen.remove(target.getUniqueId()); 
 			player.sendMessage(ChatColor.RED + "You unfroze " + ChatColor.AQUA + target.getName());
 			target.sendMessage(ChatColor.RED + "You have been unfrozen!");
 			return true;
 		}
-		this.frozen.add(target.getUniqueId()); //frozen
-		Inventory gui = Bukkit.createInventory(player, 9, ChatColor.RED + "You have been frozen!");
+		frozen.add(target.getUniqueId()); //frozen
+		Inventory gui = Bukkit.createInventory(target, 9, ChatColor.RED + "You have been frozen!");
 		ItemStack item = new ItemStack(Material.BARRIER);
 		
 		ItemMeta meta = item.getItemMeta();
@@ -74,7 +75,7 @@ public class Freeze extends JavaPlugin implements Listener {
 		
 		ItemStack[] items = {item,item,item,item,item,item,item,item,item};
 		gui.setContents(items);
-		player.openInventory(gui);
+		target.openInventory(gui);
 		player.sendMessage(ChatColor.RED + "You froze " + ChatColor.AQUA + target.getName());
 		target.sendMessage(ChatColor.RED + "You have been frozen!");
 		return true;
@@ -82,27 +83,36 @@ public class Freeze extends JavaPlugin implements Listener {
 	
 	@EventHandler
 	public void onInventoryClose(InventoryCloseEvent e) {
-		Player player = (Player)e.getPlayer();
+		Player player = (Player) e.getPlayer();
+		Inventory gui = Bukkit.createInventory(player, 9, ChatColor.RED + "You have been frozen!");
+		ItemStack item = new ItemStack(Material.BARRIER);
+		
+		ItemMeta meta = item.getItemMeta();
+		meta.setDisplayName(ChatColor.DARK_RED + "YOU ARE FROZEN!");
+		ArrayList<String> lores = new ArrayList<>();
+		lores.add(ChatColor.GOLD + "Contact our staff in 5 minutes on Discord, or you will recieve a permanent ban.");
+		meta.setLore(lores);
+		item.setItemMeta(meta);
+		
+		ItemStack[] items = {item,item,item,item,item,item,item,item,item};
+		gui.setContents(items);
+
 		if(frozen.contains(player.getUniqueId())) {
-			Inventory gui = Bukkit.createInventory(player, 9, ChatColor.RED + "You have been frozen!");
-			ItemStack item = new ItemStack(Material.BARRIER);
-			
-			ItemMeta meta = item.getItemMeta();
-			meta.setDisplayName(ChatColor.DARK_RED + "YOU ARE FROZEN!");
-			ArrayList<String> lores = new ArrayList<>();
-			lores.add(ChatColor.GOLD + "Contact our staff in 5 minutes on Discord, or you will recieve a permanent ban.");
-			meta.setLore(lores);
-			item.setItemMeta(meta);
-			
-			ItemStack[] items = {item,item,item,item,item,item,item,item,item};
-			gui.setContents(items);
-			player.openInventory(gui);
+			new BukkitRunnable() {
+			    public void run() {
+					player.openInventory(gui);
+			    }
+			}.runTaskLater(this, 2l);
+
 		}
 		
 	}
 	@EventHandler
 	public void clickEvent(InventoryClickEvent e) {
+		Player player = (Player) e.getWhoClicked();
+		if(frozen.contains(player.getUniqueId())) {
 		e.setCancelled(true);
+		}
 	}
 	/*
 	 this is for movement blocking, currently not needed
